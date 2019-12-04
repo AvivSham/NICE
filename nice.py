@@ -59,7 +59,7 @@ class AdditiveCoupling(nn.Module):
             x = torch.stack((on, off), dim=2)
         else:
             x = torch.stack((off, on), dim=2)
-        return x.view((B, W))
+        return x.view((B, W)), log_det_J
 
 class AffineCoupling(nn.Module):
     def __init__(self, in_out_dim, mid_dim, hidden, mask_config):
@@ -120,15 +120,12 @@ class Scaling(nn.Module):
         return x, log_det_J
 
 
-"""Standard logistic distribution.
-"""
-logistic = TransformedDistribution(Uniform(0, 1), [SigmoidTransform().inv, AffineTransform(loc=0., scale=1.)])
-
 """NICE main model.
 """
+
+
 class NICE(nn.Module):
-    def __init__(self, prior, coupling,
-        in_out_dim, mid_dim, hidden, mask_config,device):
+    def __init__(self, prior, coupling, in_out_dim, mid_dim, hidden, mask_config,device):
         """Initialize a NICE.
 
         Args:
@@ -144,7 +141,9 @@ class NICE(nn.Module):
             self.prior = torch.distributions.Normal(
                 torch.tensor(0.).to(device), torch.tensor(1.).to(device))
         elif prior == 'logistic':
-            self.prior = logistic
+            self.prior = TransformedDistribution(Uniform(0, 1),
+                                                 [SigmoidTransform().inv,
+                                                  AffineTransform(loc=0., scale=1.)])
         else:
             raise ValueError('Prior not implemented.')
         self.in_out_dim = in_out_dim
