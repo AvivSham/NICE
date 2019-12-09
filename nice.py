@@ -196,8 +196,8 @@ class NICE(nn.Module):
         """
         x, _ = self.scaling(z, reverse=True)
         for i in reversed(range(len(self.coupling))):
-            x = self.coupling[i](x, reverse = True)
-        return x
+            x, log_det_J = self.coupling[i](x, reverse = True)
+        return x, log_det_J
 
     def f(self, x):
         """Transformation f: X -> Z (inverse of g).
@@ -208,8 +208,8 @@ class NICE(nn.Module):
             transformed tensor in latent space Z and log determinant Jacobian
         """
         for i in range(len(self.coupling)):
-            x = self.coupling[i](x)
-        return self.scaling(x)
+            x, log_det_J = self.coupling[i](x)
+        return self.scaling(x), log_det_J
 
     def log_prob(self, x):
         """Computes data log-likelihood.
