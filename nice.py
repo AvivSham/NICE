@@ -38,7 +38,6 @@ class AdditiveCoupling(nn.Module):
         Returns:
             transformed tensor and log-determinant of Jacobian.
         """
-        #TODO fill in - what about the log_det_J?
         [B, W] = list(x.size())
         x = x.view((B,W//2,2))
         if self.mask_config:
@@ -50,6 +49,7 @@ class AdditiveCoupling(nn.Module):
         for i in range(len(self.mid_block)):
             off_ = self.mid_block[i](off_)
         shift = self.out_block(off_)
+
         if reverse:
             on = on - shift
         else:
@@ -59,7 +59,9 @@ class AdditiveCoupling(nn.Module):
             x = torch.stack((on, off), dim=2)
         else:
             x = torch.stack((off, on), dim=2)
+
         return x.view((B, W)), log_det_J
+
 
 class AffineCoupling(nn.Module):
     def __init__(self, in_out_dim, mid_dim, hidden, mask_config):
@@ -72,7 +74,11 @@ class AffineCoupling(nn.Module):
             mask_config: 1 if transform odd units, 0 if transform even units.
         """
         super(AffineCoupling, self).__init__()
-        # TODO fill in Affine coup
+        self.mask_config = mask_config
+        self.in_block = nn.Sequential(nn.ReLU(nn.Linear(in_out_dim//2, mid_dim)))
+        self.mid_block = nn.ModuleList([nn.Sequential(nn.ReLU(nn.Linear(mid_dim, mid_dim))) \
+                                        for _ in range(hidden-1)])
+        self.out_block = nn.Linear(mid_dim, in_out_dim//2)
 
     def forward(self, x, log_det_J, reverse=False):
         """Forward pass.
@@ -84,7 +90,30 @@ class AffineCoupling(nn.Module):
         Returns:
             transformed tensor and log-determinant of Jacobian.
         """
-        # TODO fill in Affine_Forward
+
+        [B, W] = list(x.size())
+        x = x.view((B,W//2,2))
+        if self.mask_config:
+            on, off = x[:, :, 0], x[:, :, 1]
+        else:
+            on, off = x[:, :, 1], x[:, :, 0]
+
+        off_ = self.in_block(off)
+        for i in range(len(self.mid_block)):
+            off_ = self.mid_block[i](off_)
+        shift = self.out_block(off_)
+        shift_1, shift_2 = shift.chunk(2,1)
+        if reverse:
+            on = on / shift_1 - shift_2
+        else:
+            on = shift_1 * on + shift_2
+
+        if self.mask_config:
+            x = torch.stack((on, off), dim=2)
+        else:
+            x = torch.stack((off, on), dim=2)
+        log_det_J = torch.sum(torch.log(shift_1).view(input.shape[0], -1), 1)
+        return x.view((B, W)), log_det_J
 
 """Log-scaling layer.
 """
@@ -125,7 +154,7 @@ class Scaling(nn.Module):
 
 
 class NICE(nn.Module):
-    def __init__(self, prior, coupling, in_out_dim, mid_dim, hidden, mask_config,device):
+    def __init__(self, prior, coupling, in_out_dim, mid_dim, hidden, mask_config,device, coup_type = "additive"):
         """Initialize a NICE.
 
         Args:
@@ -147,12 +176,15 @@ class NICE(nn.Module):
         else:
             raise ValueError('Prior not implemented.')
         self.in_out_dim = in_out_dim
-        self.coupling = nn.ModuleList([AdditiveCoupling(in_out_dim=in_out_dim, mid_dim=mid_dim,
-                                                        hidden=hidden, mask_config=(mask_config+i)%2)\
-                                       for i in range(coupling)])
+        if coup_type == "additive":
+            self.coupling = nn.ModuleList([AdditiveCoupling(in_out_dim=in_out_dim, mid_dim=mid_dim,
+                                                            hidden=hidden, mask_config=(mask_config+i)%2)\
+                                           for i in range(coupling)])
+        else:
+            self.coupling = nn.ModuleList([AffineCoupling(in_out_dim=in_out_dim, mid_dim=mid_dim,
+                                                          hidden=hidden, mask_config=(mask_config+i)%2)\
+                                           for i in range(coupling)])
         self.scaling = Scaling(in_out_dim)
-
-        # TODO fill in NICE module
 
     def f_inverse(self, z):
         """Transformation g: Z -> X (inverse of f).
