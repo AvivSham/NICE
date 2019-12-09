@@ -15,7 +15,7 @@ N = 100
 def train(flow, trainloader, optimizer, full_dim):
     flow.train()  # set to training mode
     running_loss = 0
-    for n_batches, inputs in enumerate(trainloader):
+    for n_batches, inputs in enumerate(trainloader,1):
         inputs = inputs.view(-1,full_dim) #change  shape from Bx1x28x28 to Bx784
         inputs = dequantize(inputs)
         loss = -flow(inputs).mean()
@@ -57,7 +57,7 @@ def dequantize(x):
 def main(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     full_dim = 28 * 28
-    transform  = transforms.Compose([
+    transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (1.,)),
         transforms.Lambda(lambda x: x + torch.zeros_like(x).uniform_(0., 1./256.)) #dequantization
@@ -73,7 +73,7 @@ def main(args):
         testloader = torch.utils.data.DataLoader(testset,
             batch_size=args.batch_size, shuffle=False, num_workers=2)
     elif args.dataset == 'fashion-mnist':
-        trainset = torchvision.datasets.FashionMNIST(root='~/torch/data/FashionMNIST',
+        trainset = torchvision.datasets.FashionMNIST(root='./data/FashionMNIST',
             train=True, download=True, transform=transform)
         trainloader = torch.utils.data.DataLoader(trainset,
             batch_size = args.batch_size, shuffle=True, num_workers=2)
