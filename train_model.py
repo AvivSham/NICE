@@ -1,7 +1,5 @@
 """Training procedure for NICE.
 """
-"""Training procedure for NICE.
-"""
 
 import argparse
 import torch, torchvision
@@ -13,6 +11,8 @@ import os
 # N = 100
 #
 #
+
+
 def train(flow, trainloader, optimizer, device, dataset):
     flow.train()  # set to training mode
     running_loss = 0

@@ -28,7 +28,7 @@ class AdditiveCoupling(nn.Module):
                 nn.ReLU()) for _ in range(hidden - 1)])
         self.out_block = nn.Linear(mid_dim, in_out_dim//2)
 
-    def forward(self, x, reverse=False):
+    def forward(self, x, log_det_J, reverse=False):
         """Forward pass.
 
         Args:
@@ -57,7 +57,7 @@ class AdditiveCoupling(nn.Module):
             x = torch.stack((on, off), dim=2)
         else:
             x = torch.stack((off, on), dim=2)
-        return x.reshape((B, W))
+        return x.reshape((B, W)), log_det_J
 
 """Log-scaling layer.
 """
@@ -71,6 +71,7 @@ class Scaling(nn.Module):
         super(Scaling, self).__init__()
         self.scale = nn.Parameter(
             torch.zeros((1, dim)), requires_grad=True)
+        self.eps = 1e-5
 
     def forward(self, x, reverse=False):
         """Forward pass.
@@ -81,7 +82,7 @@ class Scaling(nn.Module):
         Returns:
             transformed tensor and log-determinant of Jacobian.
         """
-        log_det_J = torch.sum(self.scale)
+        log_det_J = torch.sum(self.scale)+self.eps
         if reverse:
             x = x * torch.exp(-self.scale)
         else:
@@ -136,8 +137,9 @@ class NICE(nn.Module):
         Returns:
             transformed tensor in latent space Z.
         """
+        log_det_J=0
         for i in range(len(self.coupling)):
-            x = self.coupling[i](x)
+            x, log_det_J = self.coupling[i](x, log_det_J)
         return self.scaling(x)
 
     def log_prob(self, x):
