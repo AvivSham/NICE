@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 N = 100
 
 
-def train(flow, trainloader, optimizer, full_dim):
+def train(flow, trainloader, optimizer, full_dim, device):
     flow.train()  # set to training mode
     running_loss = 0
     for n_batches, data in enumerate(trainloader,1):
         inputs, _ = data
-        inputs = inputs.view(-1,full_dim) #change  shape from Bx1x28x28 to Bx784
+        inputs = inputs.view(-1,full_dim).to(device) #change  shape from Bx1x28x28 to Bx784
         inputs = dequantize(inputs)
         loss = -flow(inputs).mean()
         running_loss += float(loss)
@@ -108,8 +108,8 @@ def main(args):
     train_loss = []
     test_loss   = []
     for e in range(args.epochs):
-        train_loss.append(train(flow, trainloader, optimizer, full_dim).to("cpu"))
-        test_loss.append(test(flow, testloader, e, filename="sampled").to("cpu"), full_dim)
+        train_loss.append(train(flow, trainloader, optimizer, full_dim, device))
+        test_loss.append(test(flow, testloader, e, full_dim, filename="sampled"))
         if e % args.save_every == 0:
             torch.save(flow.state_dict(), model_save_filename)
             print("#" * 15,"\n")
