@@ -118,7 +118,7 @@ def main(args):
         test_loss.append(test(flow, testloader, e, device=device,
                               dataset=args.dataset,filename=f"{args.dataset}_sampled"))
         if e % args.save_every == 0:
-            torch.save(flow.state_dict(), "./models"+model_save_filename)
+            torch.save(flow.state_dict(), "./models/"+model_save_filename)
             print(f"Epoch {e}:  train loss: {train_loss[-1]} ")
 
     fig, ax = plt.subplots()
@@ -129,7 +129,7 @@ def main(args):
     ax.set_ylabel("Loss")
     ax.legend(["train loss","test loss"])
     # ax.legend(["train loss"])
-    plt.savefig(os.path.join(os.getcwd(),f"{args.dataset}_loss.png"))
+    plt.savefig(os.path.join(os.getcwd(),"loss",f"{args.dataset}_loss.png"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('MNIST NICE PyTorch implementation')
