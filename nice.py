@@ -70,7 +70,7 @@ class AffineCoupling(nn.Module):
             hidden: number of hidden layers.
             mask_config: 1 if transform odd units, 0 if transform even units.
         """
-        super(AdditiveCoupling, self).__init__()
+        super(AffineCoupling, self).__init__()
         self.mask_config = mask_config
 
         self.in_block = nn.Sequential(
