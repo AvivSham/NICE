@@ -16,10 +16,10 @@ def train(flow, trainloader, optimizer, device):
     flow.train()  # set to training mode
     running_loss = 0
     for n_batches, data in enumerate(trainloader,1):
+        optimizer.zero_grad()
         inputs, _ = data
         inputs = utils.prepare_data(
             inputs, "mnist").to(device)
-        optimizer.zero_grad()
         loss = -flow(inputs).mean()
         running_loss += float(loss)
         loss.backward()
@@ -37,6 +37,7 @@ def test(flow, testloader, epoch, filename, device):
                                      './samples/' + filename + 'epoch%d.png' % epoch)
         for n_batches, data in enumerate(testloader):
             inputs, _ = data
+            inputs = inputs.reshape(-1,28*28)
             inputs = utils.prepare_data(
                 inputs, "mnist", reverse=True).to(device)
             loss = -flow(inputs).mean()
