@@ -51,3 +51,27 @@ def prepare_data(x, dataset, zca=None, reverse=False):
 
     return x
 
+class StandardLogistic(torch.distributions.Distribution):
+    def __init__(self):
+        super(StandardLogistic, self).__init__()
+
+    def log_prob(self, x):
+        """Computes data log-likelihood.
+
+        Args:
+            x: input tensor.
+        Returns:
+            log-likelihood.
+        """
+        return -(F.softplus(x) + F.softplus(-x))
+
+    def sample(self, size):
+        """Samples from the distribution.
+
+        Args:
+            size: number of samples to generate.
+        Returns:
+            samples.
+        """
+        z = torch.distributions.Uniform(0., 1.).sample(size).cuda()
+        return torch.log(z) - torch.log(1. - z)
