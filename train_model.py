@@ -124,12 +124,12 @@ def main(args):
     fig, ax = plt.subplots()
     ax.plot(train_loss)
     ax.plot(test_loss)
-    ax.set_title("Train/Test Loss")
+    ax.set_title("Train/Test LL Loss")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
     ax.legend(["train loss","test loss"])
     # ax.legend(["train loss"])
-    plt.savefig(os.path.join(os.getcwd(),"loss.png"))
+    plt.savefig(os.path.join(os.getcwd(),f"{args.dataset}_loss.png"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('MNIST NICE PyTorch implementation')
