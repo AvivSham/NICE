@@ -126,7 +126,7 @@ class NICE(nn.Module):
         """
         x, _ = self.scaling(z, reverse=True)
         for i in reversed(range(len(self.coupling))):
-            x = self.coupling[i](x, reverse=True)
+            x, _ = self.coupling[i](x, 0, reverse=True)
         return x
 
     def f(self, x):
