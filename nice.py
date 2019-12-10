@@ -207,9 +207,10 @@ class NICE(nn.Module):
         Returns:
             transformed tensor in latent space Z and log determinant Jacobian
         """
+        log_det_J = 0
         for i in range(len(self.coupling)):
             x, log_det_J = self.coupling[i](x)
-        return self.scaling(x), log_det_J
+        return self.scaling(x)
 
     def log_prob(self, x):
         """Computes data log-likelihood.

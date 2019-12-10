@@ -69,11 +69,11 @@ def main(args):
         trainset = torchvision.datasets.MNIST(root='./data/MNIST',
             train=True, download=True, transform=transform)
         trainloader = torch.utils.data.DataLoader(trainset,
-            batch_size=args.batch_size, shuffle=True, num_workers=2)
+            batch_size=args.batch_size, shuffle=True, num_workers=1)
         testset = torchvision.datasets.MNIST(root='./data/MNIST',
             train=False, download=True, transform=transform)
         testloader = torch.utils.data.DataLoader(testset,
-            batch_size=args.batch_size, shuffle=False, num_workers=2)
+            batch_size=args.batch_size, shuffle=False, num_workers=1)
     elif args.dataset == 'fashion-mnist':
         trainset = torchvision.datasets.FashionMNIST(root='./data/FashionMNIST',
             train=True, download=True, transform=transform)
