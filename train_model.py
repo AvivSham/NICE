@@ -224,7 +224,7 @@ def main(args):
 
     train_loss = []
     test_loss   = []
-    for e in range(args.epochs):
+    for e in range(args.max_iter):
         train_loss.append(train(flow, trainloader, optimizer, device))
         test_loss.append(test(flow, testloader, e, device=device,filename="sampled"))
         if e % args.save_every == 0:
