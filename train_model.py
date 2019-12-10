@@ -17,8 +17,8 @@ def train(flow, trainloader, optimizer, full_dim, device):
     running_loss = 0
     for n_batches, data in enumerate(trainloader,1):
         inputs, _ = data
-        inputs = inputs.view(-1,full_dim).to(device) #change  shape from Bx1x28x28 to Bx784
-        inputs = dequantize(inputs)
+        inputs = inputs.view(-1,full_dim) #change  shape from Bx1x28x28 to Bx784
+        inputs = dequantize(inputs).to(device)
         loss = -flow(inputs).mean()
         running_loss += float(loss)
         loss.backward()
