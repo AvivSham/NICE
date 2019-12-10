@@ -108,8 +108,8 @@ def main(args):
     train_loss = []
     test_loss   = []
     for e in range(args.epochs):
-        train_loss.append(train(flow, trainloader, optimizer, full_dim))
-        test_loss.append(test(flow, testloader, e, filename="sampled"), full_dim)
+        train_loss.append(train(flow, trainloader, optimizer, full_dim).to("cpu"))
+        test_loss.append(test(flow, testloader, e, filename="sampled").to("cpu"), full_dim)
         if e % args.save_every == 0:
             torch.save(flow.state_dict(), model_save_filename)
             print("#" * 15,"\n")
