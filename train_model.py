@@ -32,17 +32,17 @@ def test(flow, testloader, epoch, filename, device):
     running_loss = 0
     with torch.no_grad():
         samples = flow.sample(100).cpu()
-        samples = samples.view(-1,1,28,28)
+        samples = utils.prepare_data(samples, "mnist", reverse=True)
         torchvision.utils.save_image(torchvision.utils.make_grid(samples),
                                      './samples/' + filename + 'epoch%d.png' % epoch)
-        for n_batches, data in enumerate(testloader):
-            inputs, _ = data
-            inputs = inputs.reshape(-1,28*28)
-            inputs = utils.prepare_data(
-                inputs, "mnist", reverse=True).to(device)
-            loss = -flow(inputs).mean()
-            running_loss += float(loss)
-    return running_loss / n_batches
+    #     for n_batches, data in enumerate(testloader):
+    #         inputs, _ = data
+    #         inputs = inputs.reshape(-1,28*28)
+    #         inputs = utils.prepare_data(
+    #             inputs, "mnist", reverse=True).to(device)
+    #         loss = -flow(inputs).mean()
+    #         running_loss += float(loss)
+    # return running_loss / n_batches
 
 #
 # def main(args):
@@ -224,22 +224,23 @@ def main(args):
         flow.parameters(), lr=lr, betas=(momentum, decay), eps=1e-4)
 
     train_loss = []
-    test_loss   = []
+
     for e in range(args.max_iter):
         train_loss.append(train(flow, trainloader, optimizer, device))
-        test_loss.append(test(flow, testloader, e, device=device,filename="sampled"))
+        test(flow, testloader, e, device=device,filename="sampled")
         if e % args.save_every == 0:
             torch.save(flow.state_dict(), model_save_filename)
             print("#" * 15,"\n")
-            print(f"Epoch {e}:  train loss: {train_loss[-1]} test loss: {test_loss[-1]}\n")
+            print(f"Epoch {e}:  train loss: {train_loss[-1]} ")
 
     fig, ax = plt.subplots()
     ax.plot(train_loss)
-    ax.plot(test_loss)
+    #ax.plot(test_loss)
     ax.set_title("Train/Test Loss")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
-    ax.legend(["train loss","test loss"])
+    #ax.legend(["train loss","test loss"])
+    ax.legend(["train loss"])
     plt.savefig(os.path.join(os.getcwd(),"loss.png"))
 
 if __name__ == '__main__':
@@ -259,7 +260,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_iter',
                         help='maximum number of iterations.',
                         type=int,
-                        default=25000)
+                        default=50)
     parser.add_argument('--sample_size',
                         help='number of images to generate.',
                         type=int,
@@ -283,7 +284,7 @@ if __name__ == '__main__':
     parser.add_argument('--save-every',
                         help='every how many epochs to save the model',
                         type=float,
-                        default=1e+3)
+                        default=10)
     parser.add_argument('--coup-type',
                         help="coupling type",
                         type=str,
