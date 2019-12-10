@@ -194,9 +194,9 @@ class NICE(nn.Module):
         Returns:
             transformed tensor in data space X.
         """
-        x, _ = self.scaling(z, reverse=True)
+        x, log_det_J = self.scaling(z, reverse=True)
         for i in reversed(range(len(self.coupling))):
-            x, log_det_J = self.coupling[i](x, reverse = True)
+            x, log_det_J = self.coupling[i](x, log_det_J, reverse = True)
         return x, log_det_J
 
     def f(self, x):
@@ -209,7 +209,7 @@ class NICE(nn.Module):
         """
         log_det_J = 0
         for i in range(len(self.coupling)):
-            x, log_det_J = self.coupling[i](x)
+            x, log_det_J = self.coupling[i](x, log_det_J)
         return self.scaling(x)
 
     def log_prob(self, x):
