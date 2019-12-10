@@ -39,7 +39,7 @@ class AdditiveCoupling(nn.Module):
             transformed tensor and log-determinant of Jacobian.
         """
         [B, W] = list(x.size())
-        x = x.view((B,W//2,2))
+        x = x.reshape((B,W//2,2))
         if self.mask_config:
             on, off = x[:, :, 0], x[:, :, 1]
         else:
@@ -60,7 +60,7 @@ class AdditiveCoupling(nn.Module):
         else:
             x = torch.stack((off, on), dim=2)
 
-        return x.view((B, W)), log_det_J
+        return x.reshape((B, W)), log_det_J
 
 
 class AffineCoupling(nn.Module):
