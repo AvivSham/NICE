@@ -154,6 +154,7 @@ import torch, torchvision
 import numpy as np
 import nice, utils
 import matplotlib.pyplot as plt
+import os
 
 def main(args):
     device = torch.device("cuda:0")
@@ -164,7 +165,7 @@ def main(args):
     latent = args.latent
     max_iter = args.max_iter
     sample_size = args.sample_size
-    coupling = 4
+    coupling = args.coupling
     mask_config = 1.
 
     # optimization hyperparameters
@@ -274,5 +275,17 @@ if __name__ == '__main__':
                         help='beta2 in Adam optimizer.',
                         type=float,
                         default=0.999)
+    parser.add_argument('--coupling',
+                        help='.',
+                        type=int,
+                        default=4)
+    parser.add_argument('--save-every',
+                        help='every how many epochs to save the model',
+                        type=float,
+                        default=1e+3)
+    parser.add_argument('--coup-type',
+                        help="coupling type",
+                        type=str,
+                        default="additive")
     args = parser.parse_args()
     main(args)
