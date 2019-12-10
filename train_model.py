@@ -177,7 +177,7 @@ def main(args):
     mean = None
     if dataset == 'mnist':
         mean = torch.load('./statistics/mnist_mean.pt')
-        (full_dim, mid_dim, hidden) = (1 * 28 * 28, 1000, 5)
+        (full_dim, mid_dim, hidden) = (1 * 28 * 28, args.mid_dim, args.hidden)
         transform = torchvision.transforms.ToTensor()
         trainset = torchvision.datasets.MNIST(root='~/torch/data/MNIST',
                                               train=True, download=True, transform=transform)
@@ -190,7 +190,7 @@ def main(args):
 
     elif dataset == 'fashion-mnist':
         mean = torch.load('./statistics/fashion_mnist_mean.pt')
-        (full_dim, mid_dim, hidden) = (1 * 28 * 28, 1000, 5)
+        (full_dim, mid_dim, hidden) = (1 * 28 * 28, args.mid_dim, args.hidden)
         transform = torchvision.transforms.ToTensor()
         trainset = torchvision.datasets.FashionMNIST(root='~/torch/data/FashionMNIST',
                                                      train=True, download=True, transform=transform)
@@ -287,5 +287,14 @@ if __name__ == '__main__':
                         help="coupling type",
                         type=str,
                         default="additive")
+    parser.add_argument('--mid-dim',
+                        help='.',
+                        type=int,
+                        default=1000)
+    parser.add_argument('--hidden',
+                        help='.',
+                        type=int,
+                        default=5)
+
     args = parser.parse_args()
     main(args)
