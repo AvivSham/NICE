@@ -103,7 +103,7 @@ class AffineCoupling(nn.Module):
             out_net = self.mid_block[i](out_net)
         out_net = self.out_block(out_net)
         out_net = out_net.reshape(-1,out_net.shape[-1]//2,2)
-        log_s, t = out_net[:, :, 0], out_net[:, :, 0]
+        log_s, t = out_net[:, :, 0], out_net[:, :, 1]
         out_b = (in_b + t) * log_s
         log_det_J = torch.sum(torch.log(log_s).view(x.shape[0],-1),1)
 
