@@ -5,20 +5,21 @@ import argparse
 import torch, torchvision
 from torchvision import transforms
 import numpy as np
-import nice
+import nice, utils
 import os
 import matplotlib.pyplot as plt
 
 N = 100
 
 
-def train(flow, trainloader, optimizer, full_dim, device):
+def train(flow, trainloader, optimizer, device):
     flow.train()  # set to training mode
     running_loss = 0
     for n_batches, data in enumerate(trainloader,1):
         inputs, _ = data
-        inputs = inputs.view(-1,full_dim) #change  shape from Bx1x28x28 to Bx784
-        inputs = dequantize(inputs).to(device)
+        inputs = utils.prepare_data(
+            inputs, "mnist").to(device)
+        optimizer.zero_grad()
         loss = -flow(inputs).mean()
         running_loss += float(loss)
         loss.backward()
@@ -26,7 +27,7 @@ def train(flow, trainloader, optimizer, full_dim, device):
     return running_loss / n_batches
 
 
-def test(flow, testloader, epoch, filename, full_dim):
+def test(flow, testloader, epoch, filename, device):
     flow.eval()  # set to inference mode
     running_loss = 0
     with torch.no_grad():
@@ -36,24 +37,11 @@ def test(flow, testloader, epoch, filename, full_dim):
                                      './samples/' + filename + 'epoch%d.png' % epoch)
         for n_batches, data in enumerate(testloader):
             inputs, _ = data
-            inputs = inputs.view(-1,full_dim) #change  shape from Bx1x28x28 to Bx784
-            inputs = dequantize(inputs)
+            inputs = utils.prepare_data(
+                inputs, "mnist", reverse=True).to(device)
             loss = -flow(inputs).mean()
             running_loss += float(loss)
     return running_loss / n_batches
-
-
-def dequantize(x):
-    '''Dequantize data.
-    Add noise sampled from Uniform(0, 1) to each pixel (in [0, 255]).
-    Args:
-        x: input tensor.
-        reverse: True in inference mode, False in training mode.
-    Returns:
-        dequantized data.
-    '''
-    noise = torch.distributions.Uniform(0., 1.).sample(x.size())
-    return (x * 255. + noise) / 256.
 
 
 def main(args):
