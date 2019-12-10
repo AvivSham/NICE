@@ -107,7 +107,8 @@ def main(args):
                      in_out_dim=full_dim,
                      mid_dim=mid_dim,
                      hidden=hidden,
-                     mask_config=mask_config).to(device)
+                     mask_config=mask_config,
+                     coup_type=args.coup_type).to(device)
     optimizer = torch.optim.Adam(
         flow.parameters(), lr=lr, betas=(momentum, decay), eps=1e-4)
 

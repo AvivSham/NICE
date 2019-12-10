@@ -59,6 +59,56 @@ class AdditiveCoupling(nn.Module):
             x = torch.stack((off, on), dim=2)
         return x.reshape((B, W)), log_det_J
 
+
+class AffineCoupling(nn.Module):
+    def __init__(self, in_out_dim, mid_dim, hidden, mask_config):
+        """Initialize a coupling layer.
+
+        Args:
+            in_out_dim: input/output dimensions.
+            mid_dim: number of units in a hidden layer.
+            hidden: number of hidden layers.
+            mask_config: 1 if transform odd units, 0 if transform even units.
+        """
+        super(AdditiveCoupling, self).__init__()
+        self.mask_config = mask_config
+
+        self.in_block = nn.Sequential(
+            nn.Linear(in_out_dim//2, mid_dim),
+            nn.ReLU())
+        self.mid_block = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(mid_dim, mid_dim),
+                nn.ReLU()) for _ in range(hidden - 1)])
+        self.out_block = nn.Linear(mid_dim, in_out_dim//2)
+
+    def forward(self, x, log_det_J, reverse=False):
+        """Forward pass.
+
+        Args:
+            x: input tensor.
+            reverse: True in inference mode, False in sampling mode.
+        Returns:
+            transformed tensor.
+        """
+        [B, W] = list(x.size())
+        x = x.reshape((B, W//2, 2))
+        if self.mask_config:
+            in_a, in_b = x[:, :, 0], x[:, :, 1]
+        else:
+            in_a, in_b = x[:, :, 0], x[:, :, 1]
+
+        out_net = self.in_block(in_a)
+        for i in range(len(self.mid_block)):
+            out_net = self.mid_block[i](out_net)
+        out_net = self.out_block(out_net)
+        out_net = out_net.reshape(-1,out_net.shape[-1]//2,2)
+        log_s, t = out_net[:, :, 0], out_net[:, :, 0]
+        out_b = (in_b + t) * log_s
+        log_det_J = torch.sum(torch.log(log_s).view(x.shape[0],-1),1)
+
+        return torch.cat([in_a, out_b], 1), log_det_J
+
 """Log-scaling layer.
 """
 class Scaling(nn.Module):
@@ -93,7 +143,8 @@ class Scaling(nn.Module):
 """
 class NICE(nn.Module):
     def __init__(self, prior, coupling,
-                 in_out_dim, mid_dim, hidden, mask_config):
+                 in_out_dim, mid_dim, hidden,
+                 mask_config, coup_type):
         """Initialize a NICE.
 
         Args:
@@ -107,13 +158,20 @@ class NICE(nn.Module):
         super(NICE, self).__init__()
         self.prior = prior
         self.in_out_dim = in_out_dim
-
-        self.coupling = nn.ModuleList([
-            AdditiveCoupling(in_out_dim=in_out_dim,
-                     mid_dim=mid_dim,
-                     hidden=hidden,
-                     mask_config=(mask_config+i)%2) \
-            for i in range(coupling)])
+        if coup_type == "additive":
+            self.coupling = nn.ModuleList([
+                AdditiveCoupling(in_out_dim=in_out_dim,
+                         mid_dim=mid_dim,
+                         hidden=hidden,
+                         mask_config=(mask_config+i)%2) \
+                for i in range(coupling)])
+        else:
+            self.coupling = nn.ModuleList([
+                AffineCoupling(in_out_dim=in_out_dim,
+                                 mid_dim=mid_dim,
+                                 hidden=hidden,
+                                 mask_config=(mask_config+i)%2) \
+                for i in range(coupling)])
         self.scaling = Scaling(in_out_dim)
 
     def g(self, z):
