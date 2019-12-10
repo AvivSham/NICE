@@ -35,7 +35,7 @@ def test(flow, testloader, epoch, filename, device, dataset):
         samples = flow.sample(100).cpu()
         samples = utils.prepare_data(samples, dataset, reverse=True)
         torchvision.utils.save_image(torchvision.utils.make_grid(samples),
-                                     './samples/' + filename + 'epoch%d.png' % epoch)
+                                     './samples/' + filename + '_epoch%d.png' % epoch)
         for n_batches, data in enumerate(testloader,1):
             inputs, _ = data
             inputs = utils.prepare_data(
@@ -116,7 +116,7 @@ def main(args):
     for e in range(args.max_iter):
         train_loss.append(train(flow, trainloader, optimizer, device, args.dataset))
         test_loss.append(test(flow, testloader, e, device=device,
-                              dataset=args.dataset,filename="sampled"))
+                              dataset=args.dataset,filename=f"{args.dataset}_sampled"))
         if e % args.save_every == 0:
             torch.save(flow.state_dict(), "./models"+model_save_filename)
             print(f"Epoch {e}:  train loss: {train_loss[-1]} ")
